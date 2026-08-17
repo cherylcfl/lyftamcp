@@ -6,5 +6,5 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python server.py --http"
     envVars:
-      - key: 70d88a25c0474eea0528d2ab5671ce1b2960f6a9c41c67dc7b2a4869c21cf0cd
+      - key: LYFTA_API_KEY
         sync: false
