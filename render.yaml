@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: lyfta-mcp
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python server.py --http"
+    envVars:
+      - key: LYFTA_API_KEY
+        sync: false
