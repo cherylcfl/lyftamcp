@@ -22,9 +22,11 @@ from typing import Optional
 
 import httpx
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 BASE_URL = "https://my.lyfta.app"
 API_KEY = os.environ.get("LYFTA_API_KEY")
+RENDER_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")  # auto-set by Render
 
 if not API_KEY:
     print("ERROR: LYFTA_API_KEY environment variable is not set.", file=sys.stderr)
@@ -32,7 +34,27 @@ if not API_KEY:
 
 HEADERS = {"Authorization": f"Bearer {API_KEY}"}
 
-mcp = FastMCP("lyfta")
+# Allow the SDK's DNS-rebinding protection to trust our actual public host.
+# Render injects RENDER_EXTERNAL_HOSTNAME automatically; fall back to "*" (any
+# host) only if that's somehow missing, so the server doesn't hard-fail.
+allowed_hosts = ["localhost:*", "127.0.0.1:*"]
+allowed_origins = ["http://localhost:*", "http://127.0.0.1:*"]
+if RENDER_HOSTNAME:
+    allowed_hosts.append(f"{RENDER_HOSTNAME}:*")
+    allowed_origins.append(f"https://{RENDER_HOSTNAME}:*")
+else:
+    allowed_hosts.append("*")
+    allowed_origins.append("*")
+
+mcp = FastMCP(
+    "lyfta",
+    host="0.0.0.0",
+    transport_security=TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=allowed_hosts,
+        allowed_origins=allowed_origins,
+    ),
+)
 
 
 async def _get(path: str, params: Optional[dict] = None) -> dict:
